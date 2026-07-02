@@ -72,13 +72,21 @@ public class LlamaCppService : ILlamaCppService
                 "application/json"
             );
             
-            var response = await _httpClient.PostAsync("/v1/models/load", content);
-            response.EnsureSuccessStatusCode();
-            
-            return new Models.ModelsResponse 
-            { 
-                Success = true, 
-                Warning = $"Model {modelName} is loading" 
+            // Model management routes are not under the /v1 prefix.
+            var response = await _httpClient.PostAsync("/models/load", content);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new Models.ModelsResponse
+                {
+                    Success = false,
+                    Warning = $"Failed to load model: {await ReadErrorMessage(response)}"
+                };
+            }
+
+            return new Models.ModelsResponse
+            {
+                Success = true,
+                Warning = $"Model {modelName} is loading"
             };
         }
         catch (Exception ex)
@@ -102,13 +110,20 @@ public class LlamaCppService : ILlamaCppService
                 "application/json"
             );
             
-            var response = await _httpClient.PostAsync("/v1/models/unload", content);
-            response.EnsureSuccessStatusCode();
-            
-            return new Models.ModelsResponse 
-            { 
-                Success = true, 
-                Warning = "Model unloaded successfully" 
+            var response = await _httpClient.PostAsync("/models/unload", content);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new Models.ModelsResponse
+                {
+                    Success = false,
+                    Warning = $"Failed to unload model: {await ReadErrorMessage(response)}"
+                };
+            }
+
+            return new Models.ModelsResponse
+            {
+                Success = true,
+                Warning = "Model unloaded successfully"
             };
         }
         catch (Exception ex)
@@ -149,6 +164,24 @@ public class LlamaCppService : ILlamaCppService
             // Server unreachable or metrics disabled; return whatever was collected.
         }
         return stats;
+    }
+
+    private static async Task<string> ReadErrorMessage(HttpResponseMessage response)
+    {
+        var body = await response.Content.ReadAsStringAsync();
+        try
+        {
+            using var doc = JsonDocument.Parse(body);
+            if (doc.RootElement.TryGetProperty("error", out var error) &&
+                error.TryGetProperty("message", out var message))
+            {
+                return message.GetString() ?? body;
+            }
+        }
+        catch (JsonException)
+        {
+        }
+        return string.IsNullOrWhiteSpace(body) ? $"HTTP {(int)response.StatusCode}" : body;
     }
 
     private static Dictionary<string, double> ParseMetrics(string prometheusText)
