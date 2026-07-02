@@ -1,3 +1,8 @@
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
+using LlamaDashboard.Models;
+
 namespace LlamaDashboard.Services;
 
 public interface ILlamaCppService

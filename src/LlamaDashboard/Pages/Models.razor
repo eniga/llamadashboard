@@ -145,7 +145,7 @@
         }
         else
         {
-            await JSRuntime.InvokeAsync<string>("alert", response.Warning ?? "Failed to load model");
+            await JSRuntime.InvokeAsync<string>("alert", (object?)response.Warning ?? "Failed to load model");
         }
         isLoading = false;
     }
@@ -160,7 +160,7 @@
         }
         else
         {
-            await JSRuntime.InvokeAsync<string>("alert", response.Warning ?? "Failed to unload model");
+            await JSRuntime.InvokeAsync<string>("alert", (object?)response.Warning ?? "Failed to unload model");
         }
     }
 }
