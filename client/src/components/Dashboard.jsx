@@ -79,15 +79,16 @@ export default function Dashboard({ devices, models, stats, connected }) {
                         {usedGb} GB / {vramGb} GB
                       </span>
                     </div>
-                  <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all"
-                      style={{
-                        width: device.vram
-                          ? `${((device.vramUsed || 0) / device.vram) * 100}%`
-                          : '0%'
-                      }}
-                    />
+                    <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all"
+                        style={{
+                          width: device.vram
+                            ? `${((device.vramUsed || 0) / device.vram) * 100}%`
+                            : '0%'
+                        }}
+                      />
+                    </div>
                   </div>
                 );
               })}
