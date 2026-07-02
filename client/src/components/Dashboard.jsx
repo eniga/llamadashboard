@@ -1,5 +1,5 @@
 import { Cpu, Box, BarChart3, MessageSquare, Clock, Zap, ArrowRight } from 'lucide-react';
-import { formatBytes, formatDuration } from './utils/formatters';
+import { formatBytes, formatDuration } from '../utils/formatters';
 
 export default function Dashboard({ devices, models, stats, connected }) {
   const loadedModels = models.filter(m => m.loaded);
