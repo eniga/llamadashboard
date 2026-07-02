@@ -182,7 +182,7 @@ export default function App() {
           )}
           {activeTab === 'stats' && <Stats stats={stats} />}
           {activeTab === 'chat' && <Chat connected={connected} />}
-          {activeTab === 'settings' && <SettingsPanel config={config} />}
+          {activeTab === 'settings' && <SettingsPanel />}
         </div>
       </main>
     </div>

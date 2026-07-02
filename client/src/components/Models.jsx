@@ -5,7 +5,6 @@ import toast from 'react-hot-toast';
 
 export default function Models({ models, onRefresh, onModelAction }) {
   const [loadingModel, setLoadingModel] = useState(null);
-  const [unloadModel, setUnloadModel] = useState(null);
   const [showLoadForm, setShowLoadForm] = useState(false);
   const [loadModelName, setLoadModelName] = useState('');
 

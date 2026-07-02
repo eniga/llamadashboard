@@ -2,33 +2,42 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-const getLlamaClient = () => axios.create({
-  baseURL: process.env.LLAMACPP_URL,
-  timeout: 30000,
-  headers: {
-    'Authorization': `Bearer ${process.env.LLAMACPP_API_KEY || 'null'}`,
-    'Content-Type': 'application/json'
-  }
-});
+function getClient(baseUrl) {
+  const url = (baseUrl || process.env.LLAMACPP_URL).replace(/\/+$/, '');
+  const isV1 = url.endsWith('/v1');
+  return axios.create({
+    baseURL: isV1 ? url.slice(0, -3) : url,
+    timeout: 30000,
+    headers: {
+      'Authorization': `Bearer ${process.env.LLAMACPP_API_KEY || 'null'}`,
+      'Content-Type': 'application/json'
+    }
+  });
+}
 
 // List all available models
 router.get('/', async (req, res) => {
   try {
-    const client = getLlamaClient();
+    const baseUrl = req.query.baseUrl || process.env.LLAMACPP_URL;
+    const client = getClient(baseUrl);
     const response = await client.get('/v1/models');
+
+    // Normalize response to consistent format
+    const raw = response.data;
+    const data = raw.data || raw.models || [];
+
     res.json({
       success: true,
-      data: response.data.data || response.data,
-      raw: response.data
+      data,
+      raw
     });
   } catch (error) {
     console.error('Error fetching models:', error.message);
-    // Return fallback models if API is unavailable
     res.json({
       success: true,
       data: [],
       raw: {},
-      warning: 'Could not connect to llama.cpp server. Displaying empty list.'
+      warning: 'Could not connect to llama.cpp server: ' + error.message
     });
   }
 });
@@ -36,7 +45,8 @@ router.get('/', async (req, res) => {
 // Get specific model info
 router.get('/:modelId', async (req, res) => {
   try {
-    const client = getLlamaClient();
+    const baseUrl = req.query.baseUrl || process.env.LLAMACPP_URL;
+    const client = getClient(baseUrl);
     const response = await client.get(`/v1/models/${req.params.modelId}`);
     res.json({
       success: true,
@@ -56,11 +66,13 @@ router.get('/:modelId', async (req, res) => {
 router.post('/load', async (req, res) => {
   try {
     const { model, params = {} } = req.body;
+    const baseUrl = req.body.baseUrl || process.env.LLAMACPP_URL;
+
     if (!model) {
       return res.status(400).json({ success: false, error: 'Model name is required' });
     }
 
-    const client = getLlamaClient();
+    const client = getClient(baseUrl);
     const response = await client.post('/v1/models/load', {
       model,
       ...params
@@ -84,8 +96,9 @@ router.post('/load', async (req, res) => {
 router.post('/unload', async (req, res) => {
   try {
     const { model } = req.body;
+    const baseUrl = req.body.baseUrl || process.env.LLAMACPP_URL;
 
-    const client = getLlamaClient();
+    const client = getClient(baseUrl);
     const response = await client.post('/v1/models/unload', model ? { model } : {});
 
     res.json({
@@ -105,7 +118,8 @@ router.post('/unload', async (req, res) => {
 // Check model status
 router.get('/:modelId/status', async (req, res) => {
   try {
-    const client = getLlamaClient();
+    const baseUrl = req.query.baseUrl || process.env.LLAMACPP_URL;
+    const client = getClient(baseUrl);
     const response = await client.get(`/v1/models/${req.params.modelId}/status`);
     res.json({
       success: true,

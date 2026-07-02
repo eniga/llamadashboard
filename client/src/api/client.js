@@ -1,50 +1,75 @@
 const API_BASE = '/api';
 
-export async function fetchModels() {
-  const res = await fetch(`${API_BASE}/models`);
+function url(path, baseUrl) {
+  return baseUrl ? `${API_BASE}${path}?baseUrl=${encodeURIComponent(baseUrl)}` : `${API_BASE}${path}`;
+}
+
+export async function fetchModels(baseUrl) {
+  const res = await fetch(url('/models', baseUrl));
   return res.json();
 }
 
-export async function fetchModel(modelId) {
-  const res = await fetch(`${API_BASE}/models/${modelId}`);
+export async function fetchModel(modelId, baseUrl) {
+  const res = await fetch(url(`/models/${modelId}`, baseUrl));
   return res.json();
 }
 
-export async function loadModel(model, params = {}) {
-  const res = await fetch(`${API_BASE}/models/load`, {
+export async function loadModel(model, params = {}, baseUrl) {
+  const res = await fetch(url('/models/load', baseUrl), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, params }),
+    body: JSON.stringify({ model, params, baseUrl }),
   });
   return res.json();
 }
 
-export async function unloadModel(model) {
-  const res = await fetch(`${API_BASE}/models/unload`, {
+export async function unloadModel(model, baseUrl) {
+  const res = await fetch(url('/models/unload', baseUrl), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model }),
+    body: JSON.stringify({ model, baseUrl }),
   });
   return res.json();
 }
 
-export async function fetchStats() {
-  const res = await fetch(`${API_BASE}/stats`);
+export async function fetchStats(baseUrl) {
+  const res = await fetch(url('/stats', baseUrl));
   return res.json();
 }
 
-export async function fetchMetrics() {
-  const res = await fetch(`${API_BASE}/stats/metrics`);
+export async function fetchMetrics(baseUrl) {
+  const res = await fetch(url('/stats/metrics', baseUrl));
   return res.json();
 }
 
-export async function fetchDevices() {
-  const res = await fetch(`${API_BASE}/devices`);
+export async function fetchDevices(baseUrl) {
+  const res = await fetch(url('/devices', baseUrl));
   return res.json();
 }
 
 export async function fetchConfig() {
   const res = await fetch(`${API_BASE}/config`);
+  return res.json();
+}
+
+export async function saveConfig(data) {
+  const res = await fetch(`${API_BASE}/config`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+export async function testConnection(baseUrl, apiKey) {
+  const body = {};
+  if (baseUrl) body.llamaCppUrl = baseUrl;
+  if (apiKey) body.llamaCppApiKey = apiKey;
+  const res = await fetch(`${API_BASE}/config/test`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
   return res.json();
 }
 

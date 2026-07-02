@@ -68,14 +68,17 @@ export default function Dashboard({ devices, models, stats, connected }) {
           </h3>
           {devices.length > 0 ? (
             <div className="space-y-4">
-              {devices.map(device => (
-                <div key={device.id}>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-300">{device.name}</span>
-                    <span className="text-gray-400">
-                      {formatBytes(device.vramUsed || 0)} / {formatBytes(device.vram)}
-                    </span>
-                  </div>
+              {devices.map(device => {
+                const vramGb = (device.vram / 1024).toFixed(0);
+                const usedGb = ((device.vramUsed || 0) / 1024).toFixed(1);
+                return (
+                  <div key={device.id}>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span className="text-gray-300">{device.name}</span>
+                      <span className="text-gray-400">
+                        {usedGb} GB / {vramGb} GB
+                      </span>
+                    </div>
                   <div className="w-full h-3 bg-gray-800 rounded-full overflow-hidden">
                     <div
                       className="h-full bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full transition-all"
@@ -86,8 +89,8 @@ export default function Dashboard({ devices, models, stats, connected }) {
                       }}
                     />
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <p className="text-gray-500 text-sm">No GPU information available</p>

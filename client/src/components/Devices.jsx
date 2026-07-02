@@ -1,5 +1,4 @@
 import { Cpu, MemoryStick, Info, RefreshCw } from 'lucide-react';
-import { formatBytes } from '../utils/formatters';
 
 export default function Devices({ devices }) {
   return (
@@ -29,9 +28,9 @@ export default function Devices({ devices }) {
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-6">
-                <DeviceInfo label="VRAM (Total)" value={formatBytes(device.vram)} />
-                <DeviceInfo label="VRAM (Used)" value={formatBytes(device.vramUsed || 0)} />
-                <DeviceInfo label="VRAM (Free)" value={formatBytes(device.vramFree || device.vram)} />
+                <DeviceInfo label="VRAM (Total)" value={`${(device.vram / 1024).toFixed(0)} GB`} />
+                <DeviceInfo label="VRAM (Used)" value={`${((device.vramUsed || 0) / 1024).toFixed(1)} GB`} />
+                <DeviceInfo label="VRAM (Free)" value={`${((device.vramFree || device.vram) / 1024).toFixed(1)} GB`} />
                 <DeviceInfo label="Compute Capability" value={device.computeCapability || 'N/A'} />
                 <DeviceInfo label="CUDA Version" value={device.cudaVersion || 'N/A'} />
                 <DeviceInfo label="Device Type" value={device.type || 'GPU'} />
@@ -85,7 +84,7 @@ export default function Devices({ devices }) {
           <div className="p-4 bg-gray-800/50 rounded-lg">
             <p className="text-sm text-gray-400 mb-1">Total VRAM</p>
             <p className="text-white font-medium">
-              {formatBytes(devices.reduce((sum, d) => sum + (d.vram || 0), 0))}
+              {`${(devices.reduce((sum, d) => sum + (d.vram || 0), 0) / 1024).toFixed(0)} GB`}
             </p>
           </div>
         </div>
