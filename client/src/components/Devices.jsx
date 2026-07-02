@@ -1,4 +1,5 @@
 import { Cpu, MemoryStick, Info, RefreshCw } from 'lucide-react';
+import DeviceInfo from './DeviceInfo';
 
 export default function Devices({ devices }) {
   return (
@@ -93,11 +94,4 @@ export default function Devices({ devices }) {
   );
 }
 
-function InfoItem({ label, value }) {
-  return (
-    <div>
-      <p className="text-sm text-gray-400">{label}</p>
-      <p className="text-white font-medium">{value}</p>
-    </div>
-  );
-}
+

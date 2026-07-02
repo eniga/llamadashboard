@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Toaster } from 'react-hot-toast';
+import { BrowserRouter, Routes, Route, Link, Navigate } from 'react-router-dom';
 import {
   LayoutDashboard,
   Cpu,
@@ -28,7 +29,6 @@ import Stats from './components/Stats';
 import Chat from './components/Chat';
 import SettingsPanel from './components/SettingsPanel';
 
-
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { id: 'devices', label: 'Devices', icon: Cpu },
@@ -39,27 +39,9 @@ const NAV_ITEMS = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState(() => {
-    const hash = window.location.hash.replace('#', '');
-    return NAV_ITEMS.find(item => item.id === hash)?.id || 'dashboard';
-  });
+  const location = window.location;
+  const activeTab = location.pathname.split('/')[1] || 'dashboard';
 
-  useEffect(() => {
-    const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '');
-      if (NAV_ITEMS.find(item => item.id === hash)) {
-        setActiveTab(hash);
-      }
-    };
-
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
-
-  const updateTab = (tabId) => {
-    setActiveTab(tabId);
-    window.location.hash = tabId;
-  };
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState(null);
@@ -159,9 +141,9 @@ export default function App() {
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon;
             return (
-              <button
+              <Link
                 key={item.id}
-                onClick={() => updateTab(item.id)}
+                to={`/${item.id}`}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   activeTab === item.id
                     ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20'
@@ -170,7 +152,7 @@ export default function App() {
               >
                 <Icon size={18} />
                 {item.label}
-              </button>
+              </Link>
             );
           })}
         </nav>
@@ -204,23 +186,17 @@ export default function App() {
 
       {/* Main content */}
       <main className="flex-1 overflow-auto">
-        <div className="p-8">
-          {activeTab === 'dashboard' && (
-            <Dashboard devices={devices} models={models} stats={stats} connected={connected} />
-          )}
-          {activeTab === 'devices' && <Devices devices={devices} />}
-          {activeTab === 'models' && (
-            <Models
-              models={models}
-              onRefresh={fetchData}
-              onModelAction={() => fetchData()}
-            />
-          )}
-          {activeTab === 'stats' && <Stats stats={stats} />}
-          {activeTab === 'chat' && <Chat connected={connected} />}
-          {activeTab === 'settings' && <SettingsPanel />}
-        </div>
+        <Routes>
+          <Route path="/" element={<Navigate replace to="/dashboard" />} />
+          <Route path="/dashboard" element={<Dashboard devices={devices} models={models} stats={stats} connected={connected} />} />
+          <Route path="/devices" element={<Devices devices={devices} />} />
+          <Route path="/models" element={<Models models={models} onRefresh={fetchData} onModelAction={fetchData} />} />
+          <Route path="/stats" element={<Stats stats={stats} />} />
+          <Route path="/chat" element={<Chat connected={connected} />} />
+          <Route path="/settings" element={<SettingsPanel />} />
+        </Routes>
       </main>
     </div>
   );
 }
+
