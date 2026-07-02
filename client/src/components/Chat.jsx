@@ -12,7 +12,6 @@ export default function Chat({ connected }) {
   const [model, setModel] = useState('');
   const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [streamingContent, setStreamingContent] = useState('');
   const [copiedMessage, setCopiedMessage] = useState(null);
   const messagesEndRef = useRef(null);
 
@@ -32,7 +31,7 @@ export default function Chat({ connected }) {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, streamingContent]);
+  }, [messages]);
 
   const handleCopy = (content, id) => {
     navigator.clipboard.writeText(content);
@@ -52,22 +51,13 @@ export default function Chat({ connected }) {
     setInput('');
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setLoading(true);
-    setStreamingContent('');
 
     const chatMessages = [...messages, { role: 'user', content: userMessage }];
 
     try {
-      let fullContent = '';
-      await sendChat(chatMessages, model, (chunk) => {
-        const delta = chunk.choices?.[0]?.delta?.content;
-        if (delta) {
-          fullContent += delta;
-          setStreamingContent(fullContent);
-        }
-      });
-
-      setMessages(prev => [...prev, { role: 'assistant', content: fullContent || streamingContent }]);
-      setStreamingContent('');
+      const response = await sendChat(chatMessages, model);
+      const assistantContent = response.choices?.[0]?.message?.content || 'No response';
+      setMessages(prev => [...prev, { role: 'assistant', content: assistantContent }]);
     } catch (err) {
       toast.error(err.message || 'Failed to send message');
       setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message}` }]);
@@ -176,20 +166,7 @@ export default function Chat({ connected }) {
           </div>
         ))}
 
-        {streamingContent && (
-          <div className="flex gap-4 mb-6">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-emerald-500 rounded-lg flex items-center justify-center shrink-0">
-              <Bot size={16} className="text-white" />
-            </div>
-            <div className="max-w-[80%]">
-              <div className="p-4 rounded-xl bg-gray-800">
-                <div className="prose prose-invert prose-sm max-w-none">
-                  <ReactMarkdown>{streamingContent}</ReactMarkdown>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+
 
         <div ref={messagesEndRef} />
       </div>
