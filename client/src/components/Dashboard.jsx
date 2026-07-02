@@ -150,7 +150,7 @@ function StatCard({ icon: Icon, label, value, subtext, color }) {
   return (
     <div className="card-hover">
       <div className="flex items-center gap-3 mb-3">
-        <div className={clsx('p-2 rounded-lg', colorClasses[color])}>
+        <div className={`p-2 rounded-lg ${colorClasses[color]}`}>
           <Icon size={18} />
         </div>
         <span className="text-sm text-gray-400">{label}</span>

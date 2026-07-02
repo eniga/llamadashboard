@@ -25,7 +25,7 @@ import Models from './components/Models';
 import Stats from './components/Stats';
 import Chat from './components/Chat';
 import SettingsPanel from './components/SettingsPanel';
-import { clsx } from 'clsx';
+
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -121,7 +121,7 @@ export default function App() {
             <div>
               <h1 className="font-bold text-lg text-gradient">{config?.dashboardName || 'Llama Dashboard'}</h1>
               <div className="flex items-center gap-1.5">
-                <div className={clsx('w-2 h-2 rounded-full', connected ? 'bg-emerald-500' : 'bg-red-500')} />
+                <div className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-500' : 'bg-red-500'}`} />
                 <span className="text-xs text-gray-400">
                   {connected ? 'Connected' : 'Disconnected'}
                 </span>
@@ -137,12 +137,11 @@ export default function App() {
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={clsx(
-                  'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all',
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   activeTab === item.id
                     ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'
-                )}
+                }`}
               >
                 <Icon size={18} />
                 {item.label}
