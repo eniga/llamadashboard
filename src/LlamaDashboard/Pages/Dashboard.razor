@@ -42,7 +42,7 @@
             <p class="stat-value">
                 @if (_stats.EvalCount > 0 && _stats.EvalTime > 0)
                 {
-                    @($"{(_stats.EvalTime / _stats.EvalCount * 1000):F1}ms")
+                    @($"{(_stats.EvalTime / _stats.EvalCount):F1}ms")
                 }
                 else
                 {

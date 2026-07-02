@@ -128,7 +128,7 @@ else
             
             if (response.Success && response.Choices?.Count > 0)
             {
-                var assistantMessage = response.Choices[0].Message;
+                var assistantMessage = response.Choices[0].Message?.Content ?? "";
                 _messages.Add(new ChatMessage { Role = "assistant", Content = assistantMessage });
             }
             else

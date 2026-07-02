@@ -1,3 +1,4 @@
+@page "/statistics"
 @page "/stats"
 @using LlamaDashboard.Models
 @using LlamaDashboard.Services
@@ -72,7 +73,7 @@ else
                     <span>@FormatTime(_stats.PromptTime)</span>
                     @if (_stats.PromptCount > 0 && _stats.PromptTime > 0)
                     {
-                        <span class="avg">@($"{(_stats.PromptTime / _stats.PromptCount * 1000):F2}ms/token")</span>
+                        <span class="avg">@($"{(_stats.PromptTime / _stats.PromptCount):F2}ms/token")</span>
                     }
                 </div>
                 <div class="timing-row">
@@ -80,7 +81,7 @@ else
                     <span>@FormatTime(_stats.EvalTime)</span>
                     @if (_stats.EvalCount > 0 && _stats.EvalTime > 0)
                     {
-                        <span class="avg">@($"{(_stats.EvalTime / _stats.EvalCount * 1000):F2}ms/token")</span>
+                        <span class="avg">@($"{(_stats.EvalTime / _stats.EvalCount):F2}ms/token")</span>
                     }
                 </div>
                 <div class="timing-row">

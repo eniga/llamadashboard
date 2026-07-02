@@ -11,7 +11,7 @@ builder.Services.AddSingleton<IConfigService, ConfigService>();
 builder.Services.AddScoped<ILlamaCppService>(sp =>
 {
     var config = sp.GetRequiredService<IConfigService>();
-    return new LlamaCppService(config.GetLlamaCppUrl(), config.GetLlamaCppApiKey());
+    return new LlamaCppService(config.GetLlamaCppUrl(), config.GetLlamaCppApiKey(), config.GetConfig());
 });
 
 var app = builder.Build();

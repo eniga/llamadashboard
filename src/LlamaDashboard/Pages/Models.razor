@@ -11,7 +11,7 @@
     <p>@(_loadedModels.Count > 0 ? $"{_loadedModels.Count} model(s) currently loaded" : "No models currently loaded")</p>
     <div class="header-actions">
         <button class="btn btn-primary" @onclick="ToggleLoadForm">
-            @_showLoadForm ? "Cancel" : "Load Model"
+            @(_showLoadForm ? "Cancel" : "Load Model")
         </button>
         <button class="btn btn-secondary" @onclick="RefreshModels">
             🔄 Refresh
