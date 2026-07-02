@@ -17,9 +17,7 @@ import {
   Clock,
   Terminal,
   Copy,
-  Check,
-  Pause,
-  Play
+  Check
 } from 'lucide-react';
 import { fetchDevices, fetchModels, fetchStats, fetchConfig, checkHealth, loadModel, unloadModel } from './api/client';
 import Dashboard from './components/Dashboard';
@@ -50,7 +48,6 @@ export default function App() {
   const [stats, setStats] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
-  const [autoRefresh, setAutoRefresh] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -76,12 +73,8 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (autoRefresh) {
-      fetchData();
-      const interval = setInterval(fetchData, config?.refreshInterval || 10000);
-      return () => clearInterval(interval);
-    }
-  }, [fetchData, config, autoRefresh]);
+    fetchData();
+  }, [fetchData]);
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -157,18 +150,7 @@ export default function App() {
           })}
         </nav>
 
-        <div className="p-4 border-t border-gray-800 space-y-2">
-          <button
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            className={`w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
-              autoRefresh
-                ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20'
-                : 'bg-gray-800 text-gray-400 border border-gray-700 hover:text-gray-200 hover:bg-gray-700'
-            }`}
-          >
-            {autoRefresh ? <Pause size={16} /> : <Play size={16} />}
-            {autoRefresh ? 'Pause Auto-Refresh' : 'Resume Auto-Refresh'}
-          </button>
+        <div className="p-4 border-t border-gray-800">
           <button
             onClick={handleRefresh}
             disabled={refreshing}
@@ -179,7 +161,7 @@ export default function App() {
             ) : (
               <RefreshCw size={16} />
             )}
-            Refresh Now
+            Refresh
           </button>
         </div>
       </aside>
