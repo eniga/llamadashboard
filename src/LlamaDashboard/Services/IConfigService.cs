@@ -1,3 +1,5 @@
+using LlamaDashboard.Models;
+
 namespace LlamaDashboard.Services;
 
 public interface IConfigService
