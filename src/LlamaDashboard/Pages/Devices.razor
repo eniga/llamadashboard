@@ -1,0 +1,90 @@
+@page "/devices"
+@using LlamaDashboard.Models
+@using LlamaDashboard.Services
+
+<PageTitle>Devices - Llama Dashboard</PageTitle>
+
+<h1>Device Information</h1>
+
+@if (_devices.Count > 0)
+{
+    <div class="devices-grid">
+        @foreach (var device in _devices)
+        {
+            <div class="device-card">
+                <div class="device-header">
+                    <div class="device-icon">🖥️</div>
+                    <div class="device-info">
+                        <h3>@device.Name</h3>
+                        <p>GPU @device.Id • @device.Vendor</p>
+                    </div>
+                    <span class="badge @(device.Status == "available" ? "badge-success" : "badge-warning")">
+                        @device.Status
+                    </span>
+                </div>
+
+                <div class="device-specs">
+                    <div class="spec-grid">
+                        <div class="spec-item">
+                            <span class="spec-label">VRAM (Total)</span>
+                            <span class="spec-value">@($"{device.Vram / 1024:F0} GB")</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">VRAM (Used)</span>
+                            <span class="spec-value">@($"{device.VramUsed / 1024.0:F1} GB")</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">VRAM (Free)</span>
+                            <span class="spec-value">@($"{device.VramFree / 1024.0:F1} GB")</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Compute Capability</span>
+                            <span class="spec-value">@(device.ComputeCapability ?? "N/A")</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">CUDA Version</span>
+                            <span class="spec-value">@(device.CudaVersion ?? "N/A")</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Device Type</span>
+                            <span class="spec-value">@device.Type</span>
+                        </div>
+                    </div>
+                </div>
+
+                @if (device.Vram > 0)
+                {
+                    var percent = (device.VramUsed * 100.0) / device.Vram;
+                    <div class="vram-section">
+                        <div class="vram-header">
+                            <span>Memory Utilization</span>
+                            <span>@percent:F1}%</span>
+                        </div>
+                        <div class="vram-bar">
+                            <div class="vram-fill" style="width: @percent%"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <p>🖥️</p>
+        <p>No devices detected</p>
+        <p class="text-muted">Unable to retrieve device information from the llama.cpp server.</p>
+    </div>
+}
+
+@code {
+    [Inject] private ILlamaCppService LlamaService { get; set; } = default!;
+    
+    private List<Device> _devices = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        _devices = await LlamaService.GetDevices();
+    }
+}

@@ -1,25 +1,19 @@
-FROM node:20-alpine
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
+WORKDIR /src
 
+COPY ["src/LlamaDashboard/LlamaDashboard.csproj", "src/LlamaDashboard/"]
+RUN dotnet restore "src/LlamaDashboard/LlamaDashboard.csproj"
+
+COPY . .
+WORKDIR "/src/src/LlamaDashboard"
+RUN dotnet build "LlamaDashboard.csproj" -c Release -o /app/build
+
+FROM build AS publish
+RUN dotnet publish "LlamaDashboard.csproj" -c Release -o /app/publish /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
 WORKDIR /app
-
-# Install server dependencies
-COPY server/package.json ./server/
-RUN cd server && npm install --production
-
-# Install client dependencies and build
-COPY client/package.json ./client/
-RUN cd client && npm install
-COPY client/ ./client/
-RUN cd client && npm run build
-
-# Copy server code
-COPY server/ ./server/
-
-# Environment variables
-ENV NODE_ENV=production
-ENV PORT=3001
-ENV LLAMACPP_URL=https://llm.aradhel.dev/v1
-
-EXPOSE 3001
-
-CMD ["node", "server/index.js"]
+COPY --from=publish /app/publish .
+ENV ASPNETCORE_URLS=http://+:8080
+EXPOSE 8080
+ENTRYPOINT ["dotnet", "LlamaDashboard.dll"]

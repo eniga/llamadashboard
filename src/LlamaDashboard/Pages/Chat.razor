@@ -1,0 +1,163 @@
+@page "/chat"
+@using LlamaDashboard.Models
+@using LlamaDashboard.Services
+
+<PageTitle>Chat - Llama Dashboard</PageTitle>
+
+<h1>Chat</h1>
+
+@if (!_connected)
+{
+    <div class="empty-state">
+        <p>🚫</p>
+        <p>Not Connected</p>
+        <p class="text-muted">Unable to connect to the llama.cpp server.</p>
+    </div>
+}
+else
+{
+    <div class="chat-header">
+        <div class="chat-controls">
+            <select class="form-control" @bind="selectedModel" disabled="!connected || _models.Count == 0">
+                <option value="">Select model...</option>
+                @foreach (var model in _models)
+                {
+                    <option value="@model.Id">@model.Id @(model.Loaded ? "(loaded)" : "")</option>
+                }
+            </select>
+            <button class="btn btn-secondary" @onclick="RefreshModels">
+                🔄
+            </button>
+        </div>
+    </div>
+
+    <div class="chat-messages">
+        @foreach (var msg in _messages)
+        {
+            <div class="message @(msg.Role == "user" ? "user" : "assistant")">
+                @if (msg.Role == "assistant")
+                {
+                    <div class="message-avatar">🤖</div>
+                }
+                <div class="message-content">
+                    <div class="message-text">@msg.Content</div>
+                    <div class="message-meta">
+                        <span class="message-role">@msg.Role</span>
+                        @if (msg.Role == "assistant")
+                        {
+                            <button class="btn-copy" @onclick="() => CopyToClipboard(msg.Content)">
+                                @(_copiedId == msg.Content ? "✓" : "📋")
+                            </button>
+                        }
+                    </div>
+                </div>
+                @if (msg.Role == "user")
+                {
+                    <div class="message-avatar">👤</div>
+                }
+            </div>
+        }
+        
+        @if (isLoading)
+        {
+            <div class="message assistant">
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="chat-input">
+        <textarea @bind="userInput" @bind:event="oninput" placeholder="Type your message... (Enter to send, Shift+Enter for new line)" 
+                  rows="1" disabled="isLoading"></textarea>
+        <button class="btn btn-primary" @onclick="SendMessage" disabled="string.IsNullOrWhiteSpace(userInput) || isLoading">
+            @(isLoading ? "Sending..." : "Send")
+        </button>
+    </div>
+}
+
+@code {
+    [Inject] private ILlamaCppService LlamaService { get; set; } = default!;
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    
+    private bool _connected = false;
+    private List<ModelInfo> _models = new();
+    private List<ChatMessage> _messages = new()
+    {
+        new ChatMessage { Role = "assistant", Content = "Hello! I'm connected to your llama.cpp server. How can I help you today?" }
+    };
+    private string selectedModel = "";
+    private string userInput = "";
+    private bool isLoading = false;
+    private string? _copiedId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _connected = await LlamaService.CheckHealth();
+        if (_connected)
+        {
+            var response = await LlamaService.GetModels();
+            _models = response.Data;
+        }
+    }
+
+    private async Task RefreshModels()
+    {
+        var response = await LlamaService.GetModels();
+        _models = response.Data;
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(userInput)) return;
+        
+        var message = userInput.Trim();
+        userInput = "";
+        
+        _messages.Add(new ChatMessage { Role = "user", Content = message });
+        isLoading = true;
+        
+        try
+        {
+            var response = await LlamaService.SendChat(selectedModel, _messages);
+            
+            if (response.Success && response.Choices?.Count > 0)
+            {
+                var assistantMessage = response.Choices[0].Message;
+                _messages.Add(new ChatMessage { Role = "assistant", Content = assistantMessage });
+            }
+            else
+            {
+                _messages.Add(new ChatMessage 
+                { 
+                    Role = "assistant", 
+                    Content = $"Error: {response.Error ?? "Unknown error"}" 
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            _messages.Add(new ChatMessage 
+            { 
+                Role = "assistant", 
+                Content = $"Error: {ex.Message}" 
+            });
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task CopyToClipboard(string text)
+    {
+        await JSRuntime.InvokeAsync<string>("navigator.clipboard.writeText", text);
+        _copiedId = text;
+        await Task.Delay(2000);
+        _copiedId = null;
+    }
+}

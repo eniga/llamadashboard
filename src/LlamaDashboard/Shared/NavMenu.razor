@@ -1,0 +1,83 @@
+<div class="nav-menu">
+    <div class="nav-header">
+        <h2 class="brand">🦙 Llama Dashboard</h2>
+        <div class="connection-status">
+            <div class="status-dot @(_connected ? "connected" : "disconnected")"></div>
+            <span>@(_connected ? "Connected" : "Disconnected")</span>
+        </div>
+    </div>
+    
+    <nav class="nav-links">
+        <NavLink href="/" Match="NavLinkMatch.All">
+            <div class="nav-item @(currentPage == "dashboard" ? "active" : "")">
+                <span class="nav-icon">📊</span>
+                <span>Dashboard</span>
+            </div>
+        </NavLink>
+        
+        <NavLink href="/devices" Match="NavLinkMatch.All">
+            <div class="nav-item @(currentPage == "devices" ? "active" : "")">
+                <span class="nav-icon">🖥️</span>
+                <span>Devices</span>
+            </div>
+        </NavLink>
+        
+        <NavLink href="/models" Match="NavLinkMatch.All">
+            <div class="nav-item @(currentPage == "models" ? "active" : "")">
+                <span class="nav-icon">📦</span>
+                <span>Models</span>
+            </div>
+        </NavLink>
+        
+        <NavLink href="/stats" Match="NavLinkMatch.All">
+            <div class="nav-item @(currentPage == "stats" ? "active" : "")">
+                <span class="nav-icon">📈</span>
+                <span>Statistics</span>
+            </div>
+        </NavLink>
+        
+        <NavLink href="/chat" Match="NavLinkMatch.All">
+            <div class="nav-item @(currentPage == "chat" ? "active" : "")">
+                <span class="nav-icon">💬</span>
+                <span>Chat</span>
+            </div>
+        </NavLink>
+        
+        <NavLink href="/settings" Match="NavLinkMatch.All">
+            <div class="nav-item @(currentPage == "settings" ? "active" : "")">
+                <span class="nav-icon">⚙️</span>
+                <span>Settings</span>
+            </div>
+        </NavLink>
+    </nav>
+    
+    <div class="nav-footer">
+        <button class="btn btn-secondary" @onclick="RefreshData">
+            🔄 Refresh
+        </button>
+    </div>
+</div>
+
+@code {
+    [Inject] private ILlamaCppService LlamaService { get; set; } = default!;
+    [Inject] private IConfigService ConfigService { get; set; } = default!;
+    
+    private bool _connected = false;
+    private string currentPage = "dashboard";
+
+    protected override async Task OnInitializedAsync()
+    {
+        _connected = await LlamaService.CheckHealth();
+        var uri = NavigationManager.Uri;
+        if (uri.Contains("/devices")) currentPage = "devices";
+        else if (uri.Contains("/models")) currentPage = "models";
+        else if (uri.Contains("/stats")) currentPage = "stats";
+        else if (uri.Contains("/chat")) currentPage = "chat";
+        else if (uri.Contains("/settings")) currentPage = "settings";
+    }
+
+    private async Task RefreshData()
+    {
+        _connected = await LlamaService.CheckHealth();
+    }
+}

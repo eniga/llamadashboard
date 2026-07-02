@@ -1,0 +1,165 @@
+@page "/models"
+@using LlamaDashboard.Models
+@using LlamaDashboard.Services
+
+<PageTitle>Models - Llama Dashboard</PageTitle>
+
+<h1>Models</h1>
+
+<div class="models-header">
+    <p>@(_loadedModels.Count > 0 ? $"{_loadedModels.Count} model(s) currently loaded" : "No models currently loaded")</p>
+    <div class="header-actions">
+        <button class="btn btn-primary" @onclick="ToggleLoadForm">
+            @_showLoadForm ? "Cancel" : "Load Model"
+        </button>
+        <button class="btn btn-secondary" @onclick="RefreshModels">
+            🔄 Refresh
+        </button>
+    </div>
+</div>
+
+@if (_showLoadForm)
+{
+    <div class="card">
+        <h3>Load a Model</h3>
+        <div class="load-form">
+            <input type="text" class="form-control" placeholder="Enter model name (e.g., llama-3.1-8b-instruct.Q4_K_M.gguf)" 
+                   @bind="loadModelName" @bind:event="oninput" />
+            <button class="btn btn-primary" @onclick="LoadModel" disabled="@(string.IsNullOrWhiteSpace(loadModelName) || isLoading)">
+                @(isLoading ? "Loading..." : "Load")
+            </button>
+        </div>
+    </div>
+}
+
+@if (_loadedModels.Count > 0)
+{
+    <h3>Currently Loaded</h3>
+    <div class="models-grid">
+        @foreach (var model in _loadedModels)
+        {
+            <div class="model-card loaded">
+                <div class="model-header">
+                    <div>
+                        <div class="model-id">@model.Id</div>
+                        <div class="model-owned">@(model.OwnedBy ?? "local")</div>
+                    </div>
+                    <span class="badge badge-success">Loaded</span>
+                </div>
+                <button class="btn btn-danger btn-block" @onclick="() => UnloadModel(model.Id)">
+                    ⏹️ Unload
+                </button>
+            </div>
+        }
+    </div>
+}
+
+@if (_unloadedModels.Count > 0)
+{
+    <h3>Available Models</h3>
+    <div class="models-grid">
+        @foreach (var model in _unloadedModels)
+        {
+            <div class="model-card">
+                <div class="model-header">
+                    <div>
+                        <div class="model-id">@model.Id</div>
+                        <div class="model-owned">@(model.OwnedBy ?? "local")</div>
+                    </div>
+                    <span class="badge badge-warning">Available</span>
+                </div>
+                <button class="btn btn-success btn-block" @onclick="() => { loadModelName = model.Id; ToggleLoadForm(); }">
+                    ▶️ Load Model
+                </button>
+            </div>
+        }
+    </div>
+}
+
+@if (_models.Count == 0 && !_showLoadForm)
+{
+    <div class="empty-state">
+        <p>📦</p>
+        <p>No models found</p>
+        <ul>
+            <li>The llama.cpp server has no models in its models directory</li>
+            <li>The server is running but hasn't indexed the models yet</li>
+            <li>You can manually load a model using the "Load Model" button above</li>
+        </ul>
+    </div>
+}
+
+@if (_models.Count > 0 && _loadedModels.Count == 0 && !_showLoadForm)
+{
+    <div class="empty-state">
+        <p>📦</p>
+        <p>No models currently loaded</p>
+        <p>@_models.Count model(s) available. Select one to load.</p>
+        <button class="btn btn-primary" @onclick="ToggleLoadForm">
+            ▶️ Load a Model
+        </button>
+    </div>
+}
+
+@code {
+    [Inject] private ILlamaCppService LlamaService { get; set; } = default!;
+    
+    private List<ModelInfo> _models = new();
+    private List<ModelInfo> _loadedModels = new();
+    private List<ModelInfo> _unloadedModels = new();
+    private bool _showLoadForm = false;
+    private string loadModelName = "";
+    private bool isLoading = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshModels();
+    }
+
+    private void ToggleLoadForm()
+    {
+        _showLoadForm = !_showLoadForm;
+    }
+
+    private async Task RefreshModels()
+    {
+        var response = await LlamaService.GetModels();
+        _models = response.Data;
+        _loadedModels = _models.Where(m => m.Loaded).ToList();
+        _unloadedModels = _models.Where(m => !m.Loaded).ToList();
+    }
+
+    private async Task LoadModel()
+    {
+        if (string.IsNullOrWhiteSpace(loadModelName)) return;
+        
+        isLoading = true;
+        var response = await LlamaService.LoadModel(loadModelName);
+        
+        if (response.Success)
+        {
+            loadModelName = "";
+            _showLoadForm = false;
+            await RefreshModels();
+        }
+        else
+        {
+            await JSRuntime.InvokeAsync<string>("alert", response.Warning ?? "Failed to load model");
+        }
+        isLoading = false;
+    }
+
+    private async Task UnloadModel(string modelId)
+    {
+        var response = await LlamaService.UnloadModel(modelId);
+        
+        if (response.Success)
+        {
+            await RefreshModels();
+        }
+        else
+        {
+            await JSRuntime.InvokeAsync<string>("alert", response.Warning ?? "Failed to unload model");
+        }
+    }
+}

@@ -1,0 +1,166 @@
+@page "/"
+@using LlamaDashboard.Models
+@using LlamaDashboard.Services
+
+<PageTitle>Dashboard - Llama Dashboard</PageTitle>
+
+<h1>Dashboard Overview</h1>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">🖥️</div>
+        <div class="stat-content">
+            <h3>GPUs</h3>
+            <p class="stat-value">@_devices.Count</p>
+            <p class="stat-subtitle">@(Devices.Count > 0 ? Devices[0].Name : "No devices detected")</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-content">
+            <h3>Available Models</h3>
+            <p class="stat-value">@_models.Count</p>
+            <p class="stat-subtitle">@(_loadedModels.Count) currently loaded</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">📈</div>
+        <div class="stat-content">
+            <h3>Tokens Processed</h3>
+            <p class="stat-value">@(_stats.TokenCount.ToString("N0"))</p>
+            <p class="stat-subtitle">Eval: @_stats.EvalCount | Prompt: @_stats.PromptCount</p>
+        </div>
+    </div>
+
+    <div class="stat-card">
+        <div class="stat-icon">⚡</div>
+        <div class="stat-content">
+            <h3>Avg Token Time</h3>
+            <p class="stat-value">
+                @if (_stats.EvalCount > 0 && _stats.EvalTime > 0)
+                {
+                    @($"{(_stats.EvalTime / _stats.EvalCount * 1000):F1}ms")
+                }
+                else
+                {
+                    <text>0ms</text>
+                }
+            </p>
+            <p class="stat-subtitle">per token</p>
+        </div>
+    </div>
+</div>
+
+<div class="content-grid">
+    <div class="card">
+        <h3>GPU Memory</h3>
+        @if (_devices.Count > 0)
+        {
+            var device = _devices[0];
+            var usedGb = device.VramUsed / 1024.0;
+            var totalGb = device.Vram / 1024.0;
+            var percent = device.Vram > 0 ? (device.VramUsed * 100.0 / device.Vram) : 0;
+            
+            <div class="device-info">
+                <div class="device-name">@device.Name</div>
+                <div class="vram-bar">
+                    <div class="vram-fill" style="width: @percent%"></div>
+                </div>
+                <div class="vram-labels">
+                    <span>@usedGb:F1} GB / @totalGb:F0} GB</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted">No GPU information available</p>
+        }
+    </div>
+
+    <div class="card">
+        <h3>Loaded Models</h3>
+        @if (_loadedModels.Count > 0)
+        {
+            <div class="model-list">
+                @foreach (var model in _loadedModels)
+                {
+                    <div class="model-item">
+                        <div>
+                            <div class="model-id">@model.Id</div>
+                            <div class="model-owned">@(model.OwnedBy ?? "local")</div>
+                        </div>
+                        <span class="badge badge-success">Active</span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <p>📦</p>
+                <p>No models currently loaded</p>
+            </div>
+        }
+    </div>
+
+    <div class="card">
+        <h3>Server Statistics</h3>
+        <div class="stats-list">
+            <div class="stats-row">
+                <span>Total Tokens</span>
+                <span>@_stats.TokenCount.ToString("N0")</span>
+            </div>
+            <div class="stats-row">
+                <span>Prompt Tokens</span>
+                <span>@_stats.PromptCount.ToString("N0")</span>
+            </div>
+            <div class="stats-row">
+                <span>Evaluation Tokens</span>
+                <span>@_stats.EvalCount.ToString("N0")</span>
+            </div>
+            <div class="stats-row">
+                <span>Processing Time</span>
+                <span>@FormatTime(_stats.PromptTime)</span>
+            </div>
+            <div class="stats-row">
+                <span>Evaluation Time</span>
+                <span>@FormatTime(_stats.EvalTime)</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private ILlamaCppService LlamaService { get; set; } = default!;
+    
+    private List<Device> _devices = new();
+    private List<ModelInfo> _models = new();
+    private Stats _stats = new();
+    private List<ModelInfo> _loadedModels = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        _devices = await LlamaService.GetDevices();
+        var modelsResponse = await LlamaService.GetModels();
+        _models = modelsResponse.Data;
+        _loadedModels = _models.Where(m => m.Loaded).ToList();
+        _stats = await LlamaService.GetStats();
+    }
+
+    private string FormatTime(double milliseconds)
+    {
+        if (milliseconds <= 0) return "-";
+        if (milliseconds < 1000) return $"{milliseconds:F0}ms";
+        if (milliseconds < 60000) return $"{milliseconds / 1000:F2}s";
+        var mins = (int)(milliseconds / 60000);
+        var secs = (int)((milliseconds % 60000) / 1000);
+        return $"{mins}m {secs}s";
+    }
+}

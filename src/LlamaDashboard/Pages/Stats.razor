@@ -1,0 +1,184 @@
+@page "/stats"
+@using LlamaDashboard.Models
+@using LlamaDashboard.Services
+
+<PageTitle>Statistics - Llama Dashboard</PageTitle>
+
+<h1>Statistics & Usage</h1>
+
+@if (_stats == null)
+{
+    <div class="empty-state">
+        <p>📈</p>
+        <p>No statistics available</p>
+        <p class="text-muted">Statistics will appear here once the server processes requests.</p>
+    </div>
+}
+else
+{
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-content">
+                <h3>Total Tokens</h3>
+                <p class="stat-value">@_stats.TokenCount.ToString("N0")</p>
+                <p class="stat-subtitle">All tokens processed</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⬆️</div>
+            <div class="stat-content">
+                <h3>Prompt Tokens</h3>
+                <p class="stat-value">@_stats.PromptCount.ToString("N0")</p>
+                <p class="stat-subtitle">Input tokens</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⬇️</div>
+            <div class="stat-content">
+                <h3>Output Tokens</h3>
+                <p class="stat-value">@_stats.EvalCount.ToString("N0")</p>
+                <p class="stat-subtitle">Generated tokens</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⚡</div>
+            <div class="stat-content">
+                <h3>Tokens/Second</h3>
+                <p class="stat-value">
+                    @if (_stats.EvalTime > 0)
+                    {
+                        @($"{(_stats.EvalCount / _stats.EvalTime * 1000):F1}")
+                    }
+                    else
+                    {
+                        <text>0.0</text>
+                    }
+                </p>
+                <p class="stat-subtitle">Generation speed</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="content-grid">
+        <div class="card">
+            <h3>Processing Times</h3>
+            <div class="timing-list">
+                <div class="timing-row">
+                    <span>Total Prompt Time</span>
+                    <span>@FormatTime(_stats.PromptTime)</span>
+                    @if (_stats.PromptCount > 0 && _stats.PromptTime > 0)
+                    {
+                        <span class="avg">@($"{(_stats.PromptTime / _stats.PromptCount * 1000):F2}ms/token")</span>
+                    }
+                </div>
+                <div class="timing-row">
+                    <span>Total Eval Time</span>
+                    <span>@FormatTime(_stats.EvalTime)</span>
+                    @if (_stats.EvalCount > 0 && _stats.EvalTime > 0)
+                    {
+                        <span class="avg">@($"{(_stats.EvalTime / _stats.EvalCount * 1000):F2}ms/token")</span>
+                    }
+                </div>
+                <div class="timing-row">
+                    <span>First Token Latency</span>
+                    <span>@(_stats.PromptPerTokenMs?.ToString("F2") ?? "-")ms</span>
+                </div>
+                <div class="timing-row">
+                    <span>Decode per Token</span>
+                    <span>@(_stats.EvalPerTokenMs?.ToString("F2") ?? "-")ms</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Token Distribution</h3>
+            <div class="distribution-section">
+                <div class="distribution-item">
+                    <div class="distribution-labels">
+                        <span>Prompt Tokens</span>
+                        <span>
+                            @if (_stats.TokenCount > 0)
+                            {
+                                @($"{(_stats.PromptCount * 100.0 / _stats.TokenCount):F1}%")
+                            }
+                            else
+                            {
+                                <text>0%</text>
+                            }
+                        </span>
+                    </div>
+                    <div class="distribution-bar">
+                        <div class="distribution-fill prompt" style="width: @(GetPromptPercent())%"></div>
+                    </div>
+                </div>
+
+                <div class="distribution-item">
+                    <div class="distribution-labels">
+                        <span>Output Tokens</span>
+                        <span>
+                            @if (_stats.TokenCount > 0)
+                            {
+                                @($"{(_stats.EvalCount * 100.0 / _stats.TokenCount):F1}%")
+                            }
+                            else
+                            {
+                                <text>0%</text>
+                            }
+                        </span>
+                    </div>
+                    <div class="distribution-bar">
+                        <div class="distribution-fill output" style="width: @(GetEvalPercent())%"></div>
+                    </div>
+                </div>
+
+                <div class="distribution-summary">
+                    <div class="summary-item">
+                        <span>Prompt Tokens</span>
+                        <span class="value prompt">@_stats.PromptCount.ToString("N0")</span>
+                    </div>
+                    <div class="summary-item">
+                        <span>Eval Tokens</span>
+                        <span class="value output">@_stats.EvalCount.ToString("N0")</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Inject] private ILlamaCppService LlamaService { get; set; } = default!;
+    
+    private Stats? _stats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        _stats = await LlamaService.GetStats();
+    }
+
+    private double GetPromptPercent()
+    {
+        if (_stats == null || _stats.TokenCount == 0) return 0;
+        return (_stats.PromptCount * 100.0) / _stats.TokenCount;
+    }
+
+    private double GetEvalPercent()
+    {
+        if (_stats == null || _stats.TokenCount == 0) return 0;
+        return (_stats.EvalCount * 100.0) / _stats.TokenCount;
+    }
+
+    private string FormatTime(double milliseconds)
+    {
+        if (milliseconds <= 0) return "-";
+        if (milliseconds < 1000) return $"{milliseconds:F0}ms";
+        if (milliseconds < 60000) return $"{milliseconds / 1000:F2}s";
+        var mins = (int)(milliseconds / 60000);
+        var secs = (int)((milliseconds % 60000) / 1000);
+        return $"{mins}m {secs}s";
+    }
+}

@@ -1,0 +1,142 @@
+@page "/settings"
+@using LlamaDashboard.Models
+@using LlamaDashboard.Services
+
+<PageTitle>Settings - Llama Dashboard</PageTitle>
+
+<h1>Settings</h1>
+
+<div class="settings-grid">
+    <div class="card">
+        <h3>🔌 Server Connection</h3>
+        <div class="form-group">
+            <label>llama.cpp Server URL</label>
+            <input type="text" class="form-control" @bind="config.LlamaCppUrl" />
+            <small>The base URL of your llama.cpp server (OpenAI-compatible endpoint)</small>
+        </div>
+        <div class="form-group">
+            <label>API Key</label>
+            <input type="password" class="form-control" @bind="config.LlamaCppApiKey" placeholder="Leave empty if no authentication" />
+            <small>API key for authenticating with the llama.cpp server</small>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>⚙️ Dashboard Settings</h3>
+        <div class="form-group">
+            <label>Dashboard Name</label>
+            <input type="text" class="form-control" @bind="config.DashboardName" placeholder="Llama Dashboard" />
+            <small>Name displayed in the sidebar header</small>
+        </div>
+        <div class="form-group">
+            <label>Refresh Interval (ms)</label>
+            <input type="number" class="form-control" @bind="config.RefreshInterval" min="1000" />
+            <small>How often to refresh dashboard data (minimum 1000ms)</small>
+        </div>
+        <div class="form-group">
+            <label>Max Tokens</label>
+            <input type="number" class="form-control" @bind="config.MaxTokens" />
+            <small>Default max tokens for chat completions</small>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🖥️ GPU Configuration</h3>
+        <div class="form-group">
+            <label>Primary GPU</label>
+            <input type="text" class="form-control" @bind="config.PrimaryGpu" placeholder="NVIDIA RTX PRO 4000 Blackwell" />
+        </div>
+        <div class="form-group">
+            <label>VRAM (MB)</label>
+            <input type="number" class="form-control" @bind="config.VramMB" />
+        </div>
+        <div class="form-group">
+            <label>CUDA Version</label>
+            <input type="text" class="form-control" @bind="config.CudaVersion" placeholder="12.x" />
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>🎨 Appearance</h3>
+        <div class="form-group">
+            <label>Theme</label>
+            <select class="form-control" @bind="config.Theme">
+                <option value="dark">Dark</option>
+                <option value="light">Light</option>
+                <option value="auto">Auto</option>
+            </select>
+            <small>UI theme (dark mode enforced in this build)</small>
+        </div>
+    </div>
+
+    <div class="card">
+        <h3>ℹ️ About</h3>
+        <div class="about-list">
+            <div class="about-row">
+                <span>Version</span>
+                <span>1.0.0</span>
+            </div>
+            <div class="about-row">
+                <span>Backend</span>
+                <span>Blazor Server (.NET 8)</span>
+            </div>
+            <div class="about-row">
+                <span>Frontend</span>
+                <span>Blazor Server Components</span>
+            </div>
+            <div class="about-row">
+                <span>API Protocol</span>
+                <span>OpenAI Compatible</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="settings-actions">
+    <button class="btn btn-primary" @onclick="SaveSettings">💾 Save Settings</button>
+    <button class="btn btn-secondary" @onclick="TestConnection">🔌 Test Connection</button>
+</div>
+
+@if (testMessage != null)
+{
+    <div class="alert @(_connectionSuccess ? "alert-success" : "alert-danger")">
+        @testMessage
+    </div>
+}
+
+@code {
+    [Inject] private IConfigService ConfigService { get; set; } = default!;
+    [Inject] private ILlamaCppService LlamaService { get; set; } = default!;
+    
+    private DashboardConfig config = new();
+    private string? testMessage;
+    private bool _connectionSuccess;
+
+    protected override void OnInitialized()
+    {
+        config = ConfigService.GetConfig();
+    }
+
+    private void SaveSettings()
+    {
+        ConfigService.SaveConfig(config);
+        testMessage = "Settings saved successfully!";
+        _connectionSuccess = true;
+    }
+
+    private async Task TestConnection()
+    {
+        testMessage = "Testing connection...";
+        _connectionSuccess = false;
+        
+        try
+        {
+            _connectionSuccess = await LlamaService.CheckHealth();
+            testMessage = _connectionSuccess ? "Connected successfully!" : "Connection failed";
+        }
+        catch
+        {
+            testMessage = "Connection failed";
+        }
+    }
+}
