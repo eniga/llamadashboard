@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader2, AlertCircle, Copy, Check } from 'lucide-react';
-import { sendChat } from '../api/client';
+import { Send, Bot, User, Loader2, AlertCircle, Copy, Check, RefreshCw } from 'lucide-react';
+import { sendChat, fetchModels } from '../api/client';
 import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 
@@ -10,10 +10,21 @@ export default function Chat({ connected }) {
   ]);
   const [input, setInput] = useState('');
   const [model, setModel] = useState('');
+  const [models, setModels] = useState([]);
   const [loading, setLoading] = useState(false);
   const [streamingContent, setStreamingContent] = useState('');
   const [copiedMessage, setCopiedMessage] = useState(null);
   const messagesEndRef = useRef(null);
+
+  useEffect(() => {
+    if (connected) {
+      fetchModels().then(res => {
+        if (res.success && res.data) {
+          setModels(res.data);
+        }
+      });
+    }
+  }, [connected]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -30,7 +41,12 @@ export default function Chat({ connected }) {
   };
 
   const handleSend = async () => {
-    if (!input.trim() || loading) return;
+    if (!input.trim() || loading || !model) {
+      if (!model) {
+        toast.error('Please select a model first');
+      }
+      return;
+    }
 
     const userMessage = input.trim();
     setInput('');
@@ -93,9 +109,23 @@ export default function Chat({ connected }) {
             value={model}
             onChange={(e) => setModel(e.target.value)}
             className="input w-64"
+            disabled={!connected || models.length === 0}
           >
             <option value="">Select model...</option>
+            {models.map(m => (
+              <option key={m.id} value={m.id}>
+                {m.id} {m.loaded ? '(loaded)' : ''}
+              </option>
+            ))}
           </select>
+          <button
+            onClick={() => fetchModels().then(res => {
+              if (res.success && res.data) setModels(res.data);
+            })}
+            className="btn-secondary"
+          >
+            <RefreshCw size={16} />
+          </button>
         </div>
       </div>
 

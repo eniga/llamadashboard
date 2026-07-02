@@ -26,9 +26,15 @@ router.get('/', async (req, res) => {
     const raw = response.data;
     const data = raw.data || raw.models || [];
 
+    // Mark models as loaded based on response
+    const enrichedData = data.map(model => ({
+      ...model,
+      loaded: model.loaded || false
+    }));
+
     res.json({
       success: true,
-      data,
+      data: enrichedData,
       raw
     });
   } catch (error) {
@@ -38,6 +44,31 @@ router.get('/', async (req, res) => {
       data: [],
       raw: {},
       warning: 'Could not connect to llama.cpp server: ' + error.message
+    });
+  }
+});
+
+// Get currently loaded models
+router.get('/loaded', async (req, res) => {
+  try {
+    const baseUrl = req.query.baseUrl || process.env.LLAMACPP_URL;
+    const client = getClient(baseUrl);
+    const response = await client.get('/v1/models');
+    
+    const data = response.data?.data || response.data?.models || [];
+    const loadedModels = data.filter(m => m.loaded);
+
+    res.json({
+      success: true,
+      data: loadedModels,
+      count: loadedModels.length
+    });
+  } catch (error) {
+    console.error('Error fetching loaded models:', error.message);
+    res.json({
+      success: true,
+      data: [],
+      count: 0
     });
   }
 });
@@ -73,10 +104,21 @@ router.post('/load', async (req, res) => {
     }
 
     const client = getClient(baseUrl);
-    const response = await client.post('/v1/models/load', {
-      model,
-      ...params
-    });
+    
+    // Try different endpoint formats for llama.cpp
+    let response;
+    try {
+      response = await client.post('/v1/models/load', {
+        model,
+        ...params
+      });
+    } catch {
+      // Fallback to /load endpoint
+      response = await client.post('/load', {
+        model,
+        ...params
+      });
+    }
 
     res.json({
       success: true,

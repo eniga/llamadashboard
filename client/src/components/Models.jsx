@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Box, Loader2, Play, StopCircle, RefreshCw, Info } from 'lucide-react';
 import { loadModel, unloadModel, fetchModels } from '../api/client';
 import toast from 'react-hot-toast';
@@ -44,6 +44,17 @@ export default function Models({ models, onRefresh, onModelAction }) {
 
   const loadedModels = models.filter(m => m.loaded);
   const unloadedModels = models.filter(m => !m.loaded);
+
+  // If no loaded models but models exist, fetch fresh data
+  useEffect(() => {
+    if (models.length > 0 && loadedModels.length === 0) {
+      fetchModels().then(res => {
+        if (res.success && res.data) {
+          onRefresh?.();
+        }
+      });
+    }
+  }, [models, loadedModels.length]);
 
   return (
     <div className="space-y-8">
@@ -175,6 +186,28 @@ export default function Models({ models, onRefresh, onModelAction }) {
             <li>• The server is running but hasn't indexed the models yet</li>
             <li>• You can manually load a model using the "Load Model" button above</li>
           </ul>
+          <button onClick={onRefresh} className="btn-secondary mt-4">
+            <RefreshCw size={16} />
+            Refresh
+          </button>
+        </div>
+      )}
+
+      {/* No loaded models but models exist */}
+      {models.length > 0 && loadedModels.length === 0 && !showLoadForm && (
+        <div className="card text-center py-8">
+          <Box size={48} className="text-gray-600 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-300 mb-2">No Models Currently Loaded</h3>
+          <p className="text-gray-500 mb-4">
+            {models.length} model{models.length > 1 ? 's' : ''} available. Select one to load.
+          </p>
+          <button
+            onClick={() => setShowLoadForm(true)}
+            className="btn-primary"
+          >
+            <Play size={16} />
+            Load a Model
+          </button>
         </div>
       )}
     </div>
