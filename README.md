@@ -17,7 +17,7 @@ A modern web dashboard for managing and monitoring your [llama.cpp](https://gith
 ```
 ┌─────────────────────────────────┐     ┌──────────────────────────┐
 │     Llama Dashboard (Blazor)    │     │   llama.cpp Server       │
-│  .NET 8 • Blazor Server         │     │  https://llm.aradhel.dev │
+│  .NET 8 • Blazor Server         │     │  https://ai.aradhel.dev │
 │  SignalR • HttpClient           │     │          /v1             │
 └─────────────┬───────────────────┘     └────────────┬─────────────┘
               │                                     │
@@ -66,7 +66,7 @@ Configuration is managed via `appsettings.json` or environment variables.
 ```json
 {
   "LlamaCpp": {
-    "Url": "https://llm.aradhel.dev/v1",
+    "Url": "https://ai.aradhel.dev/v1",
     "ApiKey": "",
     "RefreshInterval": 10000
   },
@@ -85,7 +85,7 @@ Configuration is managed via `appsettings.json` or environment variables.
 ### Environment Variables
 
 ```bash
-export LlamaCpp__Url=https://llm.aradhel.dev/v1
+export LlamaCpp__Url=https://ai.aradhel.dev/v1
 export LlamaCpp__ApiKey=your-api-key
 export GPU__Primary="NVIDIA RTX PRO 4000 Blackwell"
 ```

@@ -20,7 +20,7 @@ public class ConfigService : IConfigService
         _configuration = configuration;
         _config = new DashboardConfig
         {
-            LlamaCppUrl = _configuration["LlamaCpp:Url"] ?? "https://llm.aradhel.dev/v1",
+            LlamaCppUrl = _configuration["LlamaCpp:Url"] ?? "https://ai.aradhel.dev/v1",
             LlamaCppApiKey = _configuration["LlamaCpp:ApiKey"] ?? "",
             DashboardName = _configuration["Dashboard:Name"] ?? "Llama Dashboard",
             RefreshInterval = int.Parse(_configuration["LlamaCpp:RefreshInterval"] ?? "10000"),

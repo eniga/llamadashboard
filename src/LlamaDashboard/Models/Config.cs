@@ -2,7 +2,7 @@ namespace LlamaDashboard.Models;
 
 public class DashboardConfig
 {
-    public string LlamaCppUrl { get; set; } = "https://llm.aradhel.dev/v1";
+    public string LlamaCppUrl { get; set; } = "https://ai.aradhel.dev/v1";
     public string LlamaCppApiKey { get; set; } = "";
     public string DashboardName { get; set; } = "Llama Dashboard";
     public int RefreshInterval { get; set; } = 10000;
