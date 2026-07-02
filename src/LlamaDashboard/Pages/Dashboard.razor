@@ -13,7 +13,7 @@
         <div class="stat-content">
             <h3>GPUs</h3>
             <p class="stat-value">@_devices.Count</p>
-            <p class="stat-subtitle">@(Devices.Count > 0 ? Devices[0].Name : "No devices detected")</p>
+            <p class="stat-subtitle">@(_devices.Count > 0 ? _devices[0].Name : "No devices detected")</p>
         </div>
     </div>
 
@@ -70,7 +70,7 @@
                     <div class="vram-fill" style="width: @percent%"></div>
                 </div>
                 <div class="vram-labels">
-                    <span>@usedGb:F1} GB / @totalGb:F0} GB</span>
+                    <span>@usedGb.ToString("F1") GB / @totalGb.ToString("F0") GB</span>
                 </div>
             </div>
         }

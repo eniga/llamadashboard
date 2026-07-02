@@ -104,7 +104,8 @@
 
 @code {
     [Inject] private ILlamaCppService LlamaService { get; set; } = default!;
-    
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+
     private List<ModelInfo> _models = new();
     private List<ModelInfo> _loadedModels = new();
     private List<ModelInfo> _unloadedModels = new();
@@ -145,7 +146,7 @@
         }
         else
         {
-            await JSRuntime.InvokeAsync<string>("alert", (object?)response.Warning ?? "Failed to load model");
+            await JSRuntime.InvokeAsync<string>("alert", response.Warning ?? "Failed to load model");
         }
         isLoading = false;
     }
@@ -160,7 +161,7 @@
         }
         else
         {
-            await JSRuntime.InvokeAsync<string>("alert", (object?)response.Warning ?? "Failed to unload model");
+            await JSRuntime.InvokeAsync<string>("alert", response.Warning ?? "Failed to unload model");
         }
     }
 }

@@ -93,7 +93,7 @@ public class LlamaCppService : ILlamaCppService
     {
         try
         {
-            var payload = modelName != null ? new { model = modelName } : new { };
+            var payload = modelName != null ? (object)new { model = modelName } : new { };
             var content = new StringContent(
                 System.Text.Json.JsonSerializer.Serialize(payload),
                 System.Text.Encoding.UTF8,
