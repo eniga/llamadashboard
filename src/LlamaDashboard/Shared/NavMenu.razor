@@ -1,5 +1,6 @@
 @using LlamaDashboard.Services
 @using Microsoft.AspNetCore.Components.Routing
+@implements IDisposable
 @inject NavigationManager NavigationManager
 
 <div class="nav-menu">
@@ -71,17 +72,39 @@
 
     protected override async Task OnInitializedAsync()
     {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        UpdateCurrentPage();
         _connected = await LlamaService.CheckHealth();
-        var uri = NavigationManager.Uri;
-        if (uri.Contains("/devices")) currentPage = "devices";
-        else if (uri.Contains("/models")) currentPage = "models";
-        else if (uri.Contains("/statistics")) currentPage = "statistics";
-        else if (uri.Contains("/chat")) currentPage = "chat";
-        else if (uri.Contains("/settings")) currentPage = "settings";
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        UpdateCurrentPage();
+        StateHasChanged();
+    }
+
+    private void UpdateCurrentPage()
+    {
+        var path = NavigationManager.ToBaseRelativePath(NavigationManager.Uri)
+            .TrimEnd('/').ToLowerInvariant();
+        currentPage = path switch
+        {
+            "devices" => "devices",
+            "models" => "models",
+            "statistics" or "stats" => "statistics",
+            "chat" => "chat",
+            "settings" => "settings",
+            _ => "dashboard"
+        };
     }
 
     private async Task RefreshData()
     {
         _connected = await LlamaService.CheckHealth();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }
