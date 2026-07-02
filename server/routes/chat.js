@@ -2,42 +2,41 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 
-const getLlamaClient = () => axios.create({
-  baseURL: process.env.LLAMACPP_URL,
-  timeout: 60000,
-  headers: {
-    'Authorization': `Bearer ${process.env.LLAMACPP_API_KEY || 'null'}`,
-    'Content-Type': 'application/json'
-  }
-});
+function getLlamaClient(baseUrl) {
+  const url = (baseUrl || process.env.LLAMACPP_URL).replace(/\/+$/, '');
+  const isV1 = url.endsWith('/v1');
+  return axios.create({
+    baseURL: isV1 ? url.slice(0, -3) : url,
+    timeout: 30000,
+    headers: {
+      'Authorization': `Bearer ${process.env.LLAMACPP_API_KEY || 'null'}`,
+      'Content-Type': 'application/json'
+    }
+  });
+}
 
 // Chat completions endpoint
 router.post('/', async (req, res) => {
   try {
-    const { model, messages, stream = false, ...params } = req.body;
+    const { model, messages, ...params } = req.body;
+    const baseUrl = req.body.baseUrl || process.env.LLAMACPP_URL;
 
-    const client = getLlamaClient();
+    if (!messages || messages.length === 0) {
+      return res.status(400).json({ success: false, error: 'Messages are required' });
+    }
+
+    const client = getLlamaClient(baseUrl);
     const response = await client.post('/v1/chat/completions', {
       model: model || 'default',
       messages,
-      stream,
       ...params
     });
 
-    if (stream) {
-      res.setHeader('Content-Type', 'text/event-stream');
-      res.setHeader('Cache-Control', 'no-cache');
-      res.setHeader('Connection', 'keep-alive');
-      response.data.data.on_chunk?.(chunk => {
-        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
-      });
-      response.data.data.on_done?.(() => {
-        res.write('data: [DONE]\n\n');
-        res.end();
-      });
-    } else {
-      res.json(response.data);
-    }
+    res.json({
+      success: true,
+      data: response.data,
+      choices: response.data.choices || []
+    });
   } catch (error) {
     console.error('Chat error:', error.message);
     res.status(502).json({
