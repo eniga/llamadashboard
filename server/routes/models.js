@@ -26,10 +26,10 @@ router.get('/', async (req, res) => {
     const raw = response.data;
     const data = raw.data || raw.models || [];
 
-    // Mark models as loaded based on response
+    // Mark models as loaded based on status.value field
     const enrichedData = data.map(model => ({
       ...model,
-      loaded: model.loaded || false
+      loaded: model.status?.value === 'loaded'
     }));
 
     res.json({

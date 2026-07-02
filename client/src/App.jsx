@@ -37,7 +37,27 @@ const NAV_ITEMS = [
 ];
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const [activeTab, setActiveTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return NAV_ITEMS.find(item => item.id === hash)?.id || 'dashboard';
+  });
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (NAV_ITEMS.find(item => item.id === hash)) {
+        setActiveTab(hash);
+      }
+    };
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const updateTab = (tabId) => {
+    setActiveTab(tabId);
+    window.location.hash = tabId;
+  };
   const [connected, setConnected] = useState(false);
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState(null);
@@ -136,7 +156,7 @@ export default function App() {
             return (
               <button
                 key={item.id}
-                onClick={() => setActiveTab(item.id)}
+                onClick={() => updateTab(item.id)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   activeTab === item.id
                     ? 'bg-blue-600/10 text-blue-400 border border-blue-500/20'
