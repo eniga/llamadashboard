@@ -178,7 +178,11 @@ public class LlamaCppService : ILlamaCppService
     {
         try
         {
-            var payload = new { model = model ?? "default", messages };
+            var payload = new ChatRequest 
+            { 
+                Model = model ?? "default", 
+                Messages = messages 
+            };
             var content = new StringContent(
                 System.Text.Json.JsonSerializer.Serialize(payload),
                 System.Text.Encoding.UTF8,

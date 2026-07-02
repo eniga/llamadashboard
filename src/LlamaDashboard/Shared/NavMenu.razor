@@ -32,8 +32,8 @@
             </div>
         </NavLink>
         
-        <NavLink href="/stats" Match="NavLinkMatch.All">
-            <div class="nav-item @(currentPage == "stats" ? "active" : "")">
+        <NavLink href="/statistics" Match="NavLinkMatch.All">
+            <div class="nav-item @(currentPage == "statistics" ? "active" : "")">
                 <span class="nav-icon">📈</span>
                 <span>Statistics</span>
             </div>
@@ -74,7 +74,7 @@
         var uri = NavigationManager.Uri;
         if (uri.Contains("/devices")) currentPage = "devices";
         else if (uri.Contains("/models")) currentPage = "models";
-        else if (uri.Contains("/stats")) currentPage = "stats";
+        else if (uri.Contains("/statistics")) currentPage = "statistics";
         else if (uri.Contains("/chat")) currentPage = "chat";
         else if (uri.Contains("/settings")) currentPage = "settings";
     }
