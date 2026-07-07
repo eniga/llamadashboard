@@ -235,7 +235,7 @@ public class LlamaCppService : ILlamaCppService
                     Vram = gpuInfo.TotalMemoryMB,
                     VramUsed = usedMb,
                     VramFree = Math.Max(0, gpuInfo.TotalMemoryMB - usedMb),
-                    CudaVersion = gpuInfo.CudaVersion,
+                    CudaVersion = "",
                     Status = "available",
                     Type = "GPU",
                     Temperature = gpuInfo.Temperature,
