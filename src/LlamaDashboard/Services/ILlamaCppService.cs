@@ -206,37 +206,67 @@ public class LlamaCppService : ILlamaCppService
         return result;
     }
 
-    // The server exposes no GPU endpoint; approximate VRAM use from the weight
-    // size (meta.size) of loaded models. KV cache is not included.
     public async Task<List<Models.Device>> GetDevices()
     {
-        int usedMb = 0;
         try
         {
-            var models = await GetModels();
-            usedMb = (int)(models.Data.Where(m => m.Loaded).Sum(m => m.Size ?? 0) / (1024 * 1024));
+            var gpuService = new NvidiaSmiGpuService();
+            var gpuInfo = await gpuService.GetGpuInfo();
+            
+            int usedMb = 0;
+            try
+            {
+                var models = await GetModels();
+                usedMb = (int)(models.Data.Where(m => m.Loaded).Sum(m => m.Size ?? 0) / (1024 * 1024));
+            }
+            catch
+            {
+                // Server unreachable; use nvidia-smi reported usage
+                usedMb = gpuInfo.UsedMemoryMB;
+            }
+
+            return new List<Models.Device>
+            {
+                new Models.Device
+                {
+                    Id = 0,
+                    Name = gpuInfo.Name,
+                    Vendor = "NVIDIA",
+                    Vram = gpuInfo.TotalMemoryMB,
+                    VramUsed = usedMb,
+                    VramFree = Math.Max(0, gpuInfo.TotalMemoryMB - usedMb),
+                    CudaVersion = gpuInfo.CudaVersion,
+                    Status = "available",
+                    Type = "GPU",
+                    Temperature = gpuInfo.Temperature,
+                    PowerUsage = gpuInfo.PowerUsageW,
+                    PowerCap = gpuInfo.PowerCapW,
+                    Utilization = gpuInfo.Utilization
+                }
+            };
         }
         catch
         {
-            // Server unreachable; report the GPU with unknown usage.
-        }
-
-        var totalMb = _config.VramMB;
-        return new List<Models.Device>
-        {
-            new Models.Device
+            return new List<Models.Device>
             {
-                Id = 0,
-                Name = _config.PrimaryGpu,
-                Vendor = "NVIDIA",
-                Vram = totalMb,
-                VramUsed = usedMb,
-                VramFree = Math.Max(0, totalMb - usedMb),
-                CudaVersion = _config.CudaVersion,
-                Status = "available",
-                Type = "GPU"
-            }
-        };
+                new Models.Device
+                {
+                    Id = 0,
+                    Name = "Unknown GPU",
+                    Vendor = "NVIDIA",
+                    Vram = 0,
+                    VramUsed = 0,
+                    VramFree = 0,
+                    CudaVersion = "",
+                    Status = "available",
+                    Type = "GPU",
+                    Temperature = 0,
+                    PowerUsage = 0,
+                    PowerCap = 0,
+                    Utilization = 0
+                }
+            };
+        }
     }
 
     public async Task<Models.ChatResponse> SendChat(string? model, List<Models.ChatMessage> messages)

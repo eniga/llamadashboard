@@ -86,15 +86,15 @@ public class NvidiaSmiGpuService : IGpuService
     {
         return new GpuInfo
         {
-            Name = "NVIDIA RTX PRO 4000 Blackwell",
-            TotalMemoryMB = 24576,
+            Name = "Unknown GPU",
+            TotalMemoryMB = 0,
             UsedMemoryMB = 0,
             Temperature = 0,
             PowerUsageW = 0,
-            PowerCapW = 145,
+            PowerCapW = 0,
             Utilization = 0,
-            DriverVersion = "595.71.05",
-            CudaVersion = "13.2"
+            DriverVersion = "",
+            CudaVersion = ""
         };
     }
 }
