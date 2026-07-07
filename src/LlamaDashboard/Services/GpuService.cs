@@ -44,7 +44,7 @@ public class NvidiaSmiGpuService : IGpuService
             }
 
             var output = await process.StandardOutput.ReadToEndAsync();
-            var exitCode = await process.WaitForExitAsync(TimeSpan.FromSeconds(5));
+            process.WaitForExit(5000);
             
             if (!exitCode || string.IsNullOrWhiteSpace(output))
             {

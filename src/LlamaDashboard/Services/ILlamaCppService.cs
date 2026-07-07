@@ -210,11 +210,11 @@ public class LlamaCppService : ILlamaCppService
     // size (meta.size) of loaded models. KV cache is not included.
     public async Task<List<Models.Device>> GetDevices()
     {
-        long usedMb = 0;
+        int usedMb = 0;
         try
         {
             var models = await GetModels();
-            usedMb = models.Data.Where(m => m.Loaded).Sum(m => m.Size ?? 0) / (1024 * 1024);
+            usedMb = (int)(models.Data.Where(m => m.Loaded).Sum(m => m.Size ?? 0) / (1024 * 1024));
         }
         catch
         {
