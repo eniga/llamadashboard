@@ -46,7 +46,7 @@ public class NvidiaSmiGpuService : IGpuService
             var output = await process.StandardOutput.ReadToEndAsync();
             process.WaitForExit(5000);
             
-            if (!exitCode || string.IsNullOrWhiteSpace(output))
+            if (string.IsNullOrWhiteSpace(output))
             {
                 return GetDefaultGpuInfo();
             }
