@@ -38,8 +38,16 @@
                             <span class="spec-value">@($"{device.VramFree / 1024.0:F1} GB")</span>
                         </div>
                         <div class="spec-item">
-                            <span class="spec-label">Compute Capability</span>
-                            <span class="spec-value">@(device.ComputeCapability ?? "N/A")</span>
+                            <span class="spec-label">Temperature</span>
+                            <span class="spec-value">@device.Temperature°C</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Power Usage</span>
+                            <span class="spec-value">@device.PowerUsageW / @device.PowerCapW W</span>
+                        </div>
+                        <div class="spec-item">
+                            <span class="spec-label">Utilization</span>
+                            <span class="spec-value">@device.Utilization%</span>
                         </div>
                         <div class="spec-item">
                             <span class="spec-label">CUDA Version</span>

@@ -6,14 +6,18 @@ services:
       - "3001:3001"
     environment:
       - ASPNETCORE_URLS=http://+:3001
-      - LlamaCpp__Url=https://ai.aradhel.dev/v1
+      - LlamaCpp__Url=https://llm.aradhel.dev/v1
       - LlamaCpp__ApiKey=
       - LlamaCpp__RefreshInterval=10000
       - Dashboard__Name=Llama Dashboard
       - Dashboard__Theme=dark
-      - GPU__Primary=NVIDIA RTX PRO 4000 Blackwell
-      - GPU__VramMB=24576
-      - GPU__CudaVersion=12.x
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3001"]

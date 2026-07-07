@@ -8,10 +8,11 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
 builder.Services.AddSingleton<IConfigService, ConfigService>();
+builder.Services.AddSingleton<IGpuService, NvidiaSmiGpuService>();
 builder.Services.AddScoped<ILlamaCppService>(sp =>
 {
     var config = sp.GetRequiredService<IConfigService>();
-    return new LlamaCppService(config.GetLlamaCppUrl(), config.GetLlamaCppApiKey(), config.GetConfig());
+    return new LlamaCppService(config.GetLlamaCppUrl(), config.GetLlamaCppApiKey());
 });
 
 var app = builder.Build();
