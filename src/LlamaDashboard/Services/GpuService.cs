@@ -18,7 +18,6 @@ public class GpuInfo
     public int PowerCapW { get; set; }
     public int Utilization { get; set; }
     public string DriverVersion { get; set; } = "";
-    public string CudaVersion { get; set; } = "";
 }
 
 public class NvidiaSmiGpuService : IGpuService
@@ -29,8 +28,8 @@ public class NvidiaSmiGpuService : IGpuService
         {
             var psi = new ProcessStartInfo
             {
-                FileName = "nvidia-smi",
-                Arguments = "--query-gpu=name,memory.total,memory.used,temperature.gpu,power.draw,power.limit,utilization.gpu,driver_version,cuda_version --format=csv,noheader,nounits",
+                FileName = "/usr/bin/nvidia-smi",
+                Arguments = "--query-gpu=name,memory.total,memory.used,temperature.gpu,power.draw,power.limit,utilization.gpu,driver_version --format=csv,noheader,nounits",
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
                 UseShellExecute = false,
@@ -66,14 +65,13 @@ public class NvidiaSmiGpuService : IGpuService
             return new GpuInfo
             {
                 Name = parts[0],
-                TotalMemoryMB = int.TryParse(parts[1], out var total) ? total : 24576,
+                TotalMemoryMB = int.TryParse(parts[1], out var total) ? total : 0,
                 UsedMemoryMB = int.TryParse(parts[2], out var used) ? used : 0,
                 Temperature = int.TryParse(parts[3], out var temp) ? temp : 0,
                 PowerUsageW = int.TryParse(parts[4], out var pwr) ? pwr : 0,
-                PowerCapW = int.TryParse(parts[5], out var cap) ? cap : 145,
+                PowerCapW = int.TryParse(parts[5], out var cap) ? cap : 0,
                 Utilization = int.TryParse(parts[6], out var util) ? util : 0,
-                DriverVersion = parts.Length > 7 ? parts[7] : "",
-                CudaVersion = parts.Length > 8 ? parts[8] : ""
+                DriverVersion = parts.Length > 7 ? parts[7] : ""
             };
         }
         catch
@@ -93,8 +91,7 @@ public class NvidiaSmiGpuService : IGpuService
             PowerUsageW = 0,
             PowerCapW = 0,
             Utilization = 0,
-            DriverVersion = "",
-            CudaVersion = ""
+            DriverVersion = ""
         };
     }
 }
